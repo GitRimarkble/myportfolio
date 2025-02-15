@@ -10,13 +10,31 @@ export function middleware(request: NextRequest) {
 		
 		// If there's no token or token is invalid, redirect to login
 		if (!authToken || !validateToken(authToken)) {
-			return NextResponse.redirect(new URL('/login', request.url));
+			const loginUrl = new URL('/login', request.url);
+			// Add the original URL as a redirect parameter
+			loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+			
+			const response = NextResponse.redirect(loginUrl);
+			// Clear any invalid auth token
+			if (authToken) {
+				response.cookies.delete('auth-token');
+			}
+			
+			return response;
 		}
+
+		// Add security headers for admin routes
+		const response = NextResponse.next();
+		response.headers.set('X-Frame-Options', 'DENY');
+		response.headers.set('X-Content-Type-Options', 'nosniff');
+		response.headers.set('Referrer-Policy', 'same-origin');
+		
+		return response;
 	}
 	
 	return NextResponse.next();
 }
 
 export const config = {
-	matcher: '/admin/:path*',
+	matcher: ['/admin/:path*', '/login']
 };
