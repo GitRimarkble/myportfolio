@@ -24,13 +24,14 @@ export default function LoginPage() {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify(credentials),
+				credentials: 'include', // Important for cookie handling
 			});
 
-			const data = await response.json();
-
 			if (response.ok) {
-				router.push('/admin/blog');
+				router.push('/admin');
+				router.refresh(); // Force a refresh to update auth state
 			} else {
+				const data = await response.json();
 				setError(data.error || 'Login failed');
 			}
 		} catch (error) {

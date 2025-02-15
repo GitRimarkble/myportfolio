@@ -1,10 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function AdminSidebar() {
 	const pathname = usePathname();
+	const router = useRouter();
+
+	const handleLogout = async () => {
+		try {
+			const response = await fetch('/api/auth/logout', {
+				method: 'POST',
+				credentials: 'include'
+			});
+
+			if (response.ok) {
+				router.push('/login');
+				router.refresh();
+			}
+		} catch (error) {
+			console.error('Logout failed:', error);
+		}
+	};
 
 	const menuItems = [
 		{ 
@@ -61,12 +78,9 @@ export default function AdminSidebar() {
 			<div className="p-4">
 				<button 
 					className="btn btn-error w-full"
-					onClick={() => {
-						// Implement logout functionality
-						localStorage.removeItem('auth-token');
-						window.location.href = '/login';
-					}}
+					onClick={handleLogout}
 				>
+
 					Logout
 				</button>
 			</div>
