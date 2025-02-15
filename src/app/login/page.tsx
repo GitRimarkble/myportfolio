@@ -9,11 +9,13 @@ export default function LoginPage() {
 		password: ''
 	});
 	const [error, setError] = useState('');
+	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setError('');
+		setLoading(true);
 
 		try {
 			const response = await fetch('/api/auth/login', {
@@ -24,13 +26,17 @@ export default function LoginPage() {
 				body: JSON.stringify(credentials),
 			});
 
+			const data = await response.json();
+
 			if (response.ok) {
 				router.push('/admin/blog');
 			} else {
-				setError('Invalid credentials');
+				setError(data.error || 'Login failed');
 			}
 		} catch (error) {
 			setError('An error occurred. Please try again.');
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -69,8 +75,12 @@ export default function LoginPage() {
 							/>
 						</div>
 						
-						<button type="submit" className="btn btn-primary w-full">
-							Login
+						<button 
+							type="submit" 
+							className={`btn btn-primary w-full ${loading ? 'loading' : ''}`}
+							disabled={loading}
+						>
+							{loading ? 'Logging in...' : 'Login'}
 						</button>
 					</form>
 				</div>

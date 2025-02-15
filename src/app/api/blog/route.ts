@@ -1,41 +1,38 @@
 import { NextResponse } from 'next/server';
-import { MongoClient, ObjectId } from 'mongodb';
-
-const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio';
-const client = new MongoClient(uri);
+import { ObjectId } from 'mongodb';
+import clientPromise from '@/lib/mongodb';
 
 export async function GET() {
 	try {
-		await client.connect();
-		const database = client.db('portfolio');
-		const posts = database.collection('posts');
+		const client = await clientPromise;
+		const db = client.db('portfolio');
+		const posts = db.collection('posts');
 		
 		const allPosts = await posts.find({}).toArray();
 		return NextResponse.json(allPosts);
 	} catch (error) {
+		console.error('Failed to fetch posts:', error);
 		return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
-	} finally {
-		await client.close();
 	}
 }
 
 export async function POST(request: Request) {
 	try {
 		const body = await request.json();
-		await client.connect();
-		const database = client.db('portfolio');
-		const posts = database.collection('posts');
+		const client = await clientPromise;
+		const db = client.db('portfolio');
+		const posts = db.collection('posts');
 		
 		const result = await posts.insertOne({
 			...body,
+			date: new Date(),
 			createdAt: new Date(),
 			updatedAt: new Date()
 		});
 		
-		return NextResponse.json(result);
+		return NextResponse.json({ success: true, id: result.insertedId });
 	} catch (error) {
+		console.error('Failed to create post:', error);
 		return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
-	} finally {
-		await client.close();
 	}
 }

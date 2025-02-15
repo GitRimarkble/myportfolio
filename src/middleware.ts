@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { validateToken } from './lib/auth';
 
 export function middleware(request: NextRequest) {
 	// Check if it's an admin route
@@ -7,13 +8,10 @@ export function middleware(request: NextRequest) {
 		// Get the authentication token from the cookies
 		const authToken = request.cookies.get('auth-token')?.value;
 		
-		// If there's no token, redirect to login
-		if (!authToken) {
+		// If there's no token or token is invalid, redirect to login
+		if (!authToken || !validateToken(authToken)) {
 			return NextResponse.redirect(new URL('/login', request.url));
 		}
-		
-		// You can add more token validation here
-		// For now, we'll just check if it exists
 	}
 	
 	return NextResponse.next();
