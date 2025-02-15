@@ -10,18 +10,25 @@ export async function POST(request: Request) {
 		const { username, password } = await request.json();
 
 		if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-			// In a real application, you would use proper JWT signing
-			const token = Buffer.from(JSON.stringify({ username, role: 'admin' })).toString('base64');
+			// Create token
+			const token = Buffer.from(JSON.stringify({ 
+				username, 
+				role: 'admin',
+				exp: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+			})).toString('base64');
 			
-			// Set the token in cookies
-			cookies().set('auth-token', token, {
+			// Create the response
+			const response = NextResponse.json({ success: true });
+			
+			// Set cookie in the response
+			response.cookies.set('auth-token', token, {
 				httpOnly: true,
 				secure: process.env.NODE_ENV === 'production',
-				sameSite: 'strict',
+				sameSite: 'lax',
 				maxAge: 60 * 60 * 24 // 24 hours
 			});
 
-			return NextResponse.json({ success: true });
+			return response;
 		}
 
 		return NextResponse.json(
@@ -29,6 +36,7 @@ export async function POST(request: Request) {
 			{ status: 401 }
 		);
 	} catch (error) {
+		console.error('Login error:', error);
 		return NextResponse.json(
 			{ error: 'Internal server error' },
 			{ status: 500 }
