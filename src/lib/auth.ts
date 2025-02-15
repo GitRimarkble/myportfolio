@@ -1,24 +1,15 @@
-interface TokenPayload {
-	username: string;
-	role: string;
-}
+import { NextRequest } from 'next/server';
+import { verify } from 'jsonwebtoken';
 
-export function validateToken(token: string): boolean {
+export async function verifyAuth(request: NextRequest) {
+	const token = request.cookies.get('auth-token')?.value;
+	
+	if (!token) {
+		return false;
+	}
+
 	try {
-		// Decode base64 token
-		const decodedToken = Buffer.from(token, 'base64').toString();
-		const payload = JSON.parse(decodedToken) as TokenPayload;
-
-		// Check if token has required fields
-		if (!payload.username || !payload.role) {
-			return false;
-		}
-
-		// Check if role is admin
-		if (payload.role !== 'admin') {
-			return false;
-		}
-
+		verify(token, process.env.JWT_SECRET!);
 		return true;
 	} catch (error) {
 		return false;
